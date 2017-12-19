@@ -134,6 +134,7 @@ class _BTgymAnalyzer(bt.Analyzer):
             # Store agent action:
             if 'action' in self.message: # now it should!
                 self.strategy.action = self.message['action']
+                self.strategy.last_action = self.message['action']
 
             else:
                 msg = 'No <action> key recieved:\n' + msg
@@ -408,7 +409,7 @@ class BTgymServer(multiprocessing.Process):
                                    format(data_server_response['time']))
 
                 else:
-                    msg = 'BtgymServer: data_server unreachable with status: <{}>.'. \
+                    msg = 'BtgymServer_sampling_attempt: data_server unreachable with status: <{}>.'. \
                         format(data_server_response['status'])
                     self.log.error(msg)
                     raise ConnectionError(msg)

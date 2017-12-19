@@ -25,7 +25,7 @@ from gym import spaces
 import numpy as np
 from collections import deque
 
-from btgym.strategy.utils import norm_value, decayed_result
+from btgym.strategy.utils import norm_value, decayed_result, exp_scale
 
 
 ############################## Base BTgymStrategy Class ###################
@@ -46,6 +46,22 @@ class BTgymBaseStrategy(bt.Strategy):
         - bt.observers.DrawDown observer will be automatically added to BTgymStrategy instance at runtime.
         - Since it is bt.Strategy subclass, see: https://www.backtrader.com/docu/strategy.html for more information.
     """
+
+    # Time embedding period:
+    time_dim = 4  # NOTE: changed this --> change Policy  UNREAL for aux. pix control task upsampling params
+
+    # Number of environment steps to skip before returning next response,
+    # e.g. if set to 10 -- agent will interact with environment every 10th step;
+    # every other step agent action is assumed to be 'hold':
+    skip_frame = 1
+
+    # Number of timesteps reward estimation statistics are averaged over, should be:
+    # skip_frame_period <= avg_period <= time_embedding_period:
+    avg_period = time_dim
+
+    # Possible agent actions;  Note: place 'hold' first! :
+    portfolio_actions = ('hold', 'buy', 'sell', 'close')
+
     params = dict(
         # Observation state shape is dictionary of Gym spaces,
         # at least should contain `raw_state` field.
@@ -55,7 +71,7 @@ class BTgymBaseStrategy(bt.Strategy):
         # For `raw_state' (default) - absolute min/max values from BTgymDataset will be used.
         state_shape=dict(
             raw_state=spaces.Box(
-                shape=(10, 4),
+                shape=(time_dim, 4),
                 low=0, # will get overridden.
                 high=0,
             )
@@ -64,15 +80,9 @@ class BTgymBaseStrategy(bt.Strategy):
         target_call=10,  # finish episode when reaching profit target, in percent.
         dataset_stat=None,  # Summary descriptive statistics for entire dataset and
         episode_stat=None,  # current episode. Got updated by server.
-        portfolio_actions=('hold', 'buy', 'sell', 'close'),  # possible agent actions.
-        skip_frame=1,  # Number of environment steps to skip before returning next response,
-                       # e.g. if set to 10 -- agent will interact with environment every 10th episode step;
-                       # Every other step agent action is assumed to be 'hold'.
+        portfolio_actions=portfolio_actions,
+        skip_frame=skip_frame,
     )
-
-    #@classmethod
-    #def _set_params(cls, params):
-    #    cls.params = params
 
     def __init__(self, **kwargs):
         """
@@ -98,6 +108,8 @@ class BTgymBaseStrategy(bt.Strategy):
         self.inner_embedding = 1
         self.is_done = False
         self.action = 'hold'
+        self.last_action = 'hold'
+        self.reward = 0
         self.order = None
         self.order_failed = 0
         self.broker_message = '-'
@@ -106,13 +118,6 @@ class BTgymBaseStrategy(bt.Strategy):
 
         # Inherit logger from cerebro:
         self.log = self.env._log
-
-        # Time embedding period (just take first key in obs. shapes dicts as ref.):
-        self.dim_time = self.p.state_shape[list(self.p.state_shape.keys())[0]].shape[0]
-
-        # Number of timesteps reward estimation statistics are averaged over, should be:
-        # skip_frame_period < avg_period <= time_embedding_period
-        self.avg_period = self.dim_time
 
         # Normalisation constant for statistics derived from account value:
         self.broker_value_normalizer = 1 / \
@@ -134,12 +139,11 @@ class BTgymBaseStrategy(bt.Strategy):
 
         self.realized_broker_value = self.env.broker.startingcash
         self.episode_result = 0  # not used
-        self.reward = 0
 
         # Service sma to get correct first features values:
         self.data.dim_sma = btind.SimpleMovingAverage(
             self.datas[0],
-            period=(self.dim_time)
+            period=self.time_dim
         )
         self.data.dim_sma.plotinfo.plot = False
 
@@ -151,10 +155,13 @@ class BTgymBaseStrategy(bt.Strategy):
             'exposure',
             'leverage',
             'pos_duration',
+            'episode_step',
             'realized_pnl',
             'unrealized_pnl',
             'max_unrealized_pnl',
             'min_unrealized_pnl',
+            'action',
+            'reward',
         ]
         self.sliding_stat = {key: deque(maxlen=self.avg_period) for key in sliding_datalines}
 
@@ -186,12 +193,15 @@ class BTgymBaseStrategy(bt.Strategy):
             - normalized broker value
             - normalized broker cash
             - normalized exposure (position size)
-            - position duration normalized wrt. max possible episode duration
+            - position duration in steps, normalized wrt. max possible episode steps
+            - exp. scaled episode duration in steps, normalized wrt. max possible episode steps
             - normalized decayed realized profit/loss for last closed trade
                 (or zero if no trades been closed within last step);
             - normalized profit/loss for current opened trade (unrealized p/l);
             - normalized best possible up to present point unrealized result for current opened trade;
             - normalized worst possible up to present point unrealized result for current opened trade;
+            - one hot encoding for actions received;
+            - rewards received (based on self.reward variable values);
         """
         stat = self.sliding_stat
         current_value = self.env.broker.get_value()
@@ -252,6 +262,12 @@ class BTgymBaseStrategy(bt.Strategy):
         stat['pos_duration'].append(
             self.current_pos_duration / (self.data.numrecords - self.inner_embedding)
         )
+        stat['episode_step'].append(
+            exp_scale(
+                self.iteration / (self.data.numrecords - self.inner_embedding),
+                gamma=3
+            )
+        )
         stat['max_unrealized_pnl'].append(
             (self.current_pos_max_value - self.realized_broker_value) * self.broker_value_normalizer
         )
@@ -261,8 +277,32 @@ class BTgymBaseStrategy(bt.Strategy):
         stat['unrealized_pnl'].append(
             (current_value - self.realized_broker_value) * self.broker_value_normalizer
         )
+        stat['action'].append(self.action_norm(self.last_action))
+        stat['reward'].append(self.reward)
 
-        # TODO: norm. episode duration?
+        #print(stat['episode_step'])
+
+    def action_one_hot(self, action):
+        """
+        Returns one-hot encoding for action.
+        """
+        try:
+            one_hot = np.zeros(len(self.p.portfolio_actions))
+            one_hot[self.p.portfolio_actions.index(action)] = 1
+            return one_hot
+
+        except ValueError:
+            raise ValueError('Got action: <{}>, expected: <{}> '.format(self.action, self.p.portfolio_actions))
+
+    def action_norm(self, action):
+        """
+        Returns normalized in [0,1] real-valued encoding for action.
+        """
+        try:
+            return self.p.portfolio_actions.index(action) / (len(self.p.portfolio_actions) - 1)
+
+        except ValueError:
+            raise ValueError('Got action: <{}>, expected: <{}> '.format(self.action, self.p.portfolio_actions))
 
     def set_datalines(self):
         """
@@ -287,10 +327,10 @@ class BTgymBaseStrategy(bt.Strategy):
         """
         self.raw_state = np.row_stack(
             (
-                np.frombuffer(self.data.open.get(size=self.dim_time)),
-                np.frombuffer(self.data.high.get(size=self.dim_time)),
-                np.frombuffer(self.data.low.get(size=self.dim_time)),
-                np.frombuffer(self.data.close.get(size=self.dim_time)),
+                np.frombuffer(self.data.open.get(size=self.time_dim)),
+                np.frombuffer(self.data.high.get(size=self.time_dim)),
+                np.frombuffer(self.data.low.get(size=self.time_dim)),
+                np.frombuffer(self.data.close.get(size=self.time_dim)),
             )
         ).T
 
@@ -309,8 +349,10 @@ class BTgymBaseStrategy(bt.Strategy):
 
             - while iterating, ._get_raw_state() method is called just before this one,
                 so attr. `self.raw_state` is fresh and ready to use.
+
+            - should update self.state variable
         """
-        self.update_sliding_stat()
+        #self.update_sliding_stat()
         self.state['raw_state'] = self.raw_state
         return self.state
 
@@ -322,9 +364,13 @@ class BTgymBaseStrategy(bt.Strategy):
         Same principles as for state composer apply.
 
         Returns:
-             reward scalar, float
+             self.reward value: scalar, float
+
+        Note:
+            should update self.reward variable.
         """
-        return float(np.log(self.stats.broker.value[0] / self.env.broker.startingcash))
+        self.reward = float(np.log(self.stats.broker.value[0] / self.env.broker.startingcash))
+        return self.reward
 
     def get_info(self):
         """

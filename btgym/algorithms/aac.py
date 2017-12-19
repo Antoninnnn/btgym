@@ -7,7 +7,7 @@ import tensorflow as tf
 from btgym.spaces import DictSpace as ObSpace  # now can simply be gym.Dict
 from btgym.algorithms import Memory, make_data_getter, RunnerThread
 from btgym.algorithms.math_utils import log_uniform
-from btgym.algorithms.losses import value_fn_loss_def, rp_loss_def, pc_loss_def, aac_loss_def, ppo_loss_def
+from btgym.algorithms.losses import value_fn_loss_def, rp_loss_def, pc_loss_def, aac_loss_def, ppo_loss_def, state_min_max_loss_def
 from btgym.algorithms.utils import feed_dict_rnn_context, feed_dict_from_nested, batch_stack
 
 
@@ -343,6 +343,17 @@ class BaseAAC(object):
             self.loss = on_pi_loss
             model_summaries = on_pi_summaries
 
+            # wrong EXPERIMENT:
+            if False:
+                min_max_loss, min_max_summaries = state_min_max_loss_def(
+                    ohlc_targets=pi.raw_state,
+                    min_max_state=pi.state_min_max,
+                    name='on_policy',
+                    verbose=True
+                )
+                self.loss = self.loss + 0.1 * min_max_loss
+                model_summaries += min_max_summaries
+
             # Off-policy losses:
             self.off_pi_act_target = tf.placeholder(
                 tf.float32, [None, ref_env.action_space.n], name="off_policy_action_pl")
@@ -456,26 +467,40 @@ class BaseAAC(object):
             # Episode-related summaries:
             self.ep_summary = dict(
                 # Summary placeholders
-                render_human=tf.placeholder(tf.uint8, [None, None, None, 3]),
-                render_model_input_ext=tf.placeholder(tf.uint8, [None, None, None, 3]),
-                render_episode=tf.placeholder(tf.uint8, [None, None, None, 3]),
                 render_atari=tf.placeholder(tf.uint8, [None, None, None, 1]),
                 total_r=tf.placeholder(tf.float32, ),
                 cpu_time=tf.placeholder(tf.float32, ),
                 final_value=tf.placeholder(tf.float32, ),
                 steps=tf.placeholder(tf.int32, ),
             )
+
+            if self.test_mode:
+                # For Atari:
+                self.ep_summary['render_op'] = tf.summary.image("model/state", self.ep_summary['render_atari'])
+
+            else:
+                # BTGym rendering:
+                self.ep_summary.update(
+                    {
+                        mode: tf.placeholder(tf.uint8, [None, None, None, 3]) for mode in self.env_list[0].render_modes
+                    }
+                )
+                self.ep_summary['render_op'] = tf.summary.merge(
+                    [tf.summary.image(mode, self.ep_summary[mode]) for mode in self.env_list[0].render_modes]
+                )
+
             # Environmnet rendering:
-            self.ep_summary['btgym_render_op'] = tf.summary.merge(
-                [
-                    tf.summary.image('human', self.ep_summary['render_human']),
-                    tf.summary.image('model_input_external', self.ep_summary['render_model_input_ext']),
-                    tf.summary.image('episode', self.ep_summary['render_episode']),
-                ],
-                name='render_btgym'
-            )
-            # For Atari:
-            self.ep_summary['atari_render_op'] = tf.summary.image("model/state", self.ep_summary['render_atari'])
+            #if False:
+            #    self.ep_summary['btgym_render_op'] = tf.summary.merge(
+            #        [
+            #            tf.summary.image('human', self.ep_summary['render_human']),
+            #            tf.summary.image('model_input_external', self.ep_summary['render_model_input_ext']),
+            #            tf.summary.image('episode', self.ep_summary['render_episode']),
+            #        ],
+            #        name='render_btgym'
+            #    )
+            #    # For Atari:
+            #    self.ep_summary['atari_render_op'] = tf.summary.image("model/state", self.ep_summary['render_atari'])
 
             # Episode stat. summary:
             self.ep_summary['btgym_stat_op'] = tf.summary.merge(
@@ -886,15 +911,18 @@ class BaseAAC(object):
                 render_feed_dict = {
                     self.ep_summary[key]: pic for key, pic in data['render_summary'][0].items()
                 }
-                if self.test_mode:
-                    renderings = sess.run(self.ep_summary['atari_render_op'], render_feed_dict)
-
-                else:
-                    renderings = sess.run(self.ep_summary['btgym_render_op'], render_feed_dict)
+                renderings = sess.run(self.ep_summary['render_op'], render_feed_dict)
+                #if False:
+                #    if self.test_mode:
+                #        renderings = sess.run(self.ep_summary['atari_render_op'], render_feed_dict)
+                #
+                #    else:
+                #        renderings = sess.run(self.ep_summary['btgym_render_op'], render_feed_dict)
 
                 self.summary_writer.add_summary(renderings, sess.run(self.global_episode))
                 self.summary_writer.flush()
 
+        #fetches = [self.train_op, self.local_network.debug]  # include policy debug shapes
         fetches = [self.train_op]
 
         if wirte_model_summary:
@@ -915,13 +943,18 @@ class BaseAAC(object):
 
         self.local_steps += 1
 
+        # print debug info:
+        #for k, v in fetched[1].items():
+        #    print('{}: {}'.format(k,v))
+        #print('\n')
+
         #for k, v in feed_dict.items():
         #    try:
         #        print(k, v.shape)
         #    except:
         #        print(k, type(v))
 
-
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 Unreal = BaseAAC
 

@@ -29,6 +29,7 @@ import gym
 from gym import error, spaces
 #from gym import utils
 #from gym.utils import seeding, closer
+from collections import OrderedDict
 
 import backtrader as bt
 
@@ -527,6 +528,44 @@ class BTgymEnv(gym.Env):
         self.log.debug('Env response checker received:\n{}\nas type: {}'.
                        format(response, type(response)))
 
+    def _print_space(self, space, _tab=''):
+        """
+        TODO: MAKe IT WORK
+        Parses observation space shape or response.
+
+        Args:
+            space: gym observation space or response.
+
+        Returns:
+            description as string.
+        """
+        response = ''
+        if type(space) in [dict, OrderedDict]:
+            for key, value in space.items():
+                response += '\n{}{}:{}\n'.format(_tab, key, self._print_space(value, '   '))
+
+        elif type(space) in [spaces.Dict, DictSpace]:
+            for s in space.spaces:
+                response += self._print_space(s, '   ')
+
+        elif type(space) in [tuple, list]:
+            for i in space:
+                response += self._print_space(i, '   ')
+
+        elif type(space) == np.ndarray:
+            response += '\n{}array of shape: {}, low: {}, high: {}'.format(_tab, space.shape, space.min(), space.max())
+
+        else:
+            response += '\n{}{}, '.format(_tab, space)
+            try:
+                response += 'low: {}, high: {}'.format(space.low.min(), space.high.max())
+
+            except (KeyError, AttributeError, ArithmeticError, ValueError) as e:
+                pass
+                #response += '\n{}'.format(e)
+
+        return response
+
     def _reset(self, state_only=True):  # By default, returns only initial state observation (Gym convention).
         """
         Implementation of OpenAI Gym env.reset method. Starts new episode.
@@ -568,24 +607,8 @@ class BTgymEnv(gym.Env):
                 assert self.observation_space.contains(self.env_response[0])
 
             except (AssertionError, AttributeError) as e:
-                msg1 = ''
-                try:
-                    for k, v in self.observation_space.spaces.items():
-                        msg1 += '[{}]: {}, low: {}, high: {}\n'.format(
-                            k, v, v.low.min(), v.high.max()
-                        )
-                except (KeyError, AttributeError, ArithmeticError, ValueError) as e1:
-                    msg1 += '+ something illegible.\n'
-
-                msg2 = ''
-                try:
-                    for k, v in self.env_response[0].items():
-                        msg2 += '[{}]: shape: {}, low: {}, high: {}\n'.format(
-                            k, v.shape, v.min(), v.max()
-                        )
-                except (KeyError, AttributeError, ArithmeticError, ValueError) as e2:
-                    msg2 += '+ something illegible.\n'
-
+                msg1 = self._print_space(self.observation_space.spaces)
+                msg2 = self._print_space(self.env_response[0])
                 msg3 = ''
                 for step_info in self.env_response[-1]:
                     msg3 += '{}\n'.format(step_info)
