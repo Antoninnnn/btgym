@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>btgym.algorithms.rollout &mdash; BTGym 0.0.6 documentation</title>
+  <title>btgym.algorithms.rollout &mdash; BTGym 0.0.7 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="../../../genindex.html"/>
         <link rel="search" title="Search" href="../../../search.html"/>
-    <link rel="top" title="BTGym 0.0.6 documentation" href="../../../index.html"/>
+    <link rel="top" title="BTGym 0.0.7 documentation" href="../../../index.html"/>
         <link rel="up" title="Module code" href="../../index.html"/> 
 
   
@@ -65,7 +65,7 @@
             
             
               <div class="version">
-                0.0.6
+                0.0.7
               </div>
             
           
@@ -93,18 +93,22 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Package Description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html#installation">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html#quickstart">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html#problem-definition">Problem definition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html#environment-engine-description">Environment engine description</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../intro.html#a3c-framework">A3C framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html#data-flow-structure">Data flow structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html#a3c-framework-description">A3C framework description</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.envs.html">btgym.envs package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../btgym.html">btgym.datafeed module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../btgym.html#module-btgym.dataserver">btgym.dataserver module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../btgym.html">btgym.dataserver module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.html#module-btgym.server">btgym.server module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.html#module-btgym.spaces">btgym.spaces module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.strategy.html">btgym.strategy package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.monitor.html">btgym.monitor package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.rendering.html">btgym.rendering package</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../btgym.datafeed.html">btgym.datafeed package</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.algorithms.html">btgym.algorithms package</a></li>
@@ -206,7 +210,7 @@
 <span class="sd">        callable, returning dictionary of data.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">pull_rollout_from_queue</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">pull_rollout_from_queue</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">600.0</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">pull_rollout_from_queue</span></div>
@@ -237,30 +241,36 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">top</span> <span class="o">=</span> <span class="kc">False</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_struct</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                    <span class="n">_struct</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="n">_struct</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">_struct</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_struct</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="n">_struct</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                    <span class="n">_struct</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">_struct</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
 
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_struct</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-                <span class="n">_struct</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;empty&#39;</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
-            <span class="n">_struct</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="o">*</span><span class="n">pair</span><span class="p">)</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">_struct</span><span class="p">)])</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_struct</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                    <span class="n">_struct</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;empty&#39;</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
+                <span class="n">_struct</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="o">*</span><span class="n">pair</span><span class="p">)</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">_struct</span><span class="p">)])</span>
 
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">LSTMStateTuple</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_struct</span><span class="p">,</span> <span class="n">LSTMStateTuple</span><span class="p">):</span>
-                <span class="n">_struct</span> <span class="o">=</span> <span class="n">LSTMStateTuple</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-            <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_struct</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">_struct</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-            <span class="n">_struct</span> <span class="o">=</span> <span class="n">LSTMStateTuple</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_struct</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                <span class="n">_struct</span> <span class="o">+=</span> <span class="p">[</span><span class="n">values</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">LSTMStateTuple</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_struct</span><span class="p">,</span> <span class="n">LSTMStateTuple</span><span class="p">):</span>
+                    <span class="n">_struct</span> <span class="o">=</span> <span class="n">LSTMStateTuple</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_struct</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">_struct</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">_struct</span> <span class="o">=</span> <span class="n">LSTMStateTuple</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
 
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">_struct</span> <span class="o">=</span> <span class="p">[</span><span class="n">values</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_struct</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="n">_struct</span> <span class="o">+=</span> <span class="p">[</span><span class="n">values</span><span class="p">]</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">_struct</span> <span class="o">=</span> <span class="p">[</span><span class="n">values</span><span class="p">]</span>
+
+        <span class="k">except</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;values:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;_struct:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">_struct</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">top</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">_struct</span></div>
@@ -304,6 +314,9 @@
 
         <span class="k">else</span><span class="p">:</span>
             <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;context&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_frame</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="s1">&#39;context&#39;</span><span class="p">]</span> <span class="c1"># just get rollout initial LSTM state</span>
+
+        <span class="c1">#print(&#39;batch_context:&#39;)</span>
+        <span class="c1">#self._check_it(batch[&#39;context&#39;])</span>
 
         <span class="c1"># Total accumulated empirical return:</span>
         <span class="n">rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;reward&#39;</span><span class="p">])</span>
@@ -451,11 +464,17 @@
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_struct</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_check_it</span><span class="p">(</span><span class="n">_struct</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">_struct</span><span class="p">)</span> <span class="o">==</span> <span class="nb">tuple</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">_struct</span><span class="p">)</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;tuple/list:&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_struct</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_check_it</span><span class="p">(</span><span class="n">_struct</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;length </span><span class="si">{}</span><span class="s1">, type </span><span class="si">{}</span><span class="s1">, shape </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">_struct</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="n">_struct</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_struct</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;length: </span><span class="si">{}</span><span class="s1">, type: </span><span class="si">{}</span><span class="s1">, shape of element: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">_struct</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="n">_struct</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_struct</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
             <span class="k">except</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;length </span><span class="si">{}</span><span class="s1">, type </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">_struct</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="n">_struct</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span></div>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;length: </span><span class="si">{}</span><span class="s1">, type: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">_struct</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="n">_struct</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span></div>
 </pre></div>
 
            </div>
@@ -470,7 +489,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Andrew Muzikin.
+        &copy; Copyright 2017, 2018, Andrew Muzikin.
 
     </p>
   </div>
@@ -492,7 +511,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'0.0.6',
+            VERSION:'0.0.7',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

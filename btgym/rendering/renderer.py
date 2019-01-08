@@ -16,7 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ###############################################################################
-import logging
+from logbook import Logger, StreamHandler, WARNING
+import sys
 import numpy as np
 
 #from .plotter import BTgymPlotter
@@ -39,6 +40,7 @@ class BTgymRendering():
         render_size_human=(6, 3.5),
         render_size_state=(7, 3.5),
         render_size_episode=(12,8),
+        render_rowsmajor_episode=1,
         render_dpi=75,
         render_plotstyle='seaborn',
         render_cmap='PRGn',
@@ -52,6 +54,8 @@ class BTgymRendering():
                             ),
         plt_backend='Agg',  # Not used.
     )
+    enabled = True
+    ready = False
 
     def __init__(self, render_modes, **kwargs):
         """
@@ -84,10 +88,12 @@ class BTgymRendering():
         for key, value in self.params.items():
                 setattr(self, key, value)
 
-        # To log or not:
-        if 'log' not in dir(self):
-            self.log = logging.getLogger('dummy')
-            self.log.addHandler(logging.NullHandler())
+        # Logging:
+        if 'log_level' not in dir(self):
+            self.log_level = WARNING
+
+        StreamHandler(sys.stdout).push_application()
+        self.log = Logger('BTgymRenderer', level=self.log_level)
 
         #from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
         #self.FigureCanvas = FigureCanvas
@@ -106,15 +112,17 @@ class BTgymRendering():
         Call me before use!
         [Supposed to be done inside already running server process]
         """
-        from multiprocessing import Pipe
-        self.out_pipe, self.in_pipe = Pipe()
+        if not self.ready:
+            from multiprocessing import Pipe
+            self.out_pipe, self.in_pipe = Pipe()
 
-        if self.plt is None:
-            import matplotlib
-            matplotlib.use(self.plt_backend, force=True)
-            import matplotlib.pyplot as plt
+            if self.plt is None:
+                import matplotlib
+                matplotlib.use(self.plt_backend, force=True)
+                import matplotlib.pyplot as plt
 
-        self.plt = plt
+            self.plt = plt
+            self.ready = True
 
     def to_string(self, dictionary, excluded=[]):
         """
@@ -259,7 +267,7 @@ class BTgymRendering():
                     if self.render_state_as_image:
                         self.rgb_dict[mode] = self.draw_image(agent_state,
                                                                  figsize=self.render_size_state,
-                                                                 title=title,
+                                                                 title='{} / {}'.format(mode, title),
                                                                  box_text=box_text,
                                                                  ylabel=self.render_ylabel,
                                                                  xlabel=self.render_xlabel,
@@ -267,7 +275,7 @@ class BTgymRendering():
                     else:
                         self.rgb_dict[mode] = self.draw_plot(agent_state,
                                                                 figsize=self.render_size_state,
-                                                                title=title,
+                                                                title='{} / {}'.format(mode, title),
                                                                 box_text=box_text,
                                                                 ylabel=self.render_ylabel,
                                                                 xlabel=self.render_xlabel,
@@ -282,6 +290,7 @@ class BTgymRendering():
                                                             box_text=box_text,
                                                             ylabel='Price',
                                                             xlabel=self.render_xlabel,
+                                                            line_labels=['Open', 'High', 'Low', 'Close'],
                                                             )
             if send_img:
                 return self.rgb_dict
@@ -300,11 +309,34 @@ class BTgymRendering():
 
             return return_dict
 
-    def draw_plot(self, data, figsize=(10,6), title='', box_text='', xlabel='X', ylabel='Y'):
+    def draw_plot(self, data, figsize=(10,6), title='', box_text='', xlabel='X', ylabel='Y', line_labels=None):
         """
         Visualises environment state as 2d line plot.
         Retrurns image as rgb_array.
+
+        Args:
+            data:           np.array of shape [num_values, num_lines]
+            figsize:        figure size (in.)
+            title:
+            box_text:
+            xlabel:
+            ylabel:
+            line_labels:    iterable holding line legends as str
+
+        Returns:
+                rgb image as np.array of size [with, height, 3]
         """
+        if line_labels is None:
+            # If got no labels - make it numbers:
+            if len(data.shape) > 1:
+                line_labels = ['line_{}'.format(i) for i in range(data.shape[-1])]
+            else:
+                line_labels = ['line_0']
+                data = data[:, None]
+        else:
+            assert len(line_labels) == data.shape[-1], \
+                'Expected `line_labels` kwarg consist of {} names, got: {}'. format(data.shape[-1], line_labels)
+
         fig = self.plt.figure(figsize=figsize, dpi=self.render_dpi, )
         #ax = fig.add_subplot(111)
 
@@ -330,7 +362,9 @@ class BTgymRendering():
         # Add Info box:
         self.plt.text(0, data.min(), box_text, **self.render_boxtext)
 
-        self.plt.plot(data)
+        for line, label in enumerate(line_labels):
+            self.plt.plot(data[:, line], label=label)
+        self.plt.legend()
         self.plt.tight_layout()
 
         fig.canvas.draw()
@@ -344,7 +378,7 @@ class BTgymRendering():
 
         return rgb_array.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 
-    def draw_image(self, data, figsize=(12,6), title='', box_text='', xlabel='X', ylabel='Y'):
+    def draw_image(self, data, figsize=(12,6), title='', box_text='', xlabel='X', ylabel='Y', line_labels=None):
         """
         Visualises environment state as image.
         Returns rgb_array.
@@ -411,6 +445,7 @@ class BTgymRendering():
                                    height=self.render_size_episode[1],
                                    dpi=self.render_dpi,
                                    result_pipe=self.in_pipe,
+                                   rowsmajor=self.render_rowsmajor_episode,
                                    )
 
         draw_process.start()
@@ -431,14 +466,36 @@ class BTgymNullRendering():
     """
     Empty renderer to use when resources are concern.
     """
-
+    enabled = False
     def __init__(self, *args, **kwargs):
         self.plug = (np.random.rand(100, 200, 3) * 255).astype(dtype=np.uint8)
         self.params = {'rendering': 'disabled'}
         self.render_modes = []
+        # self.log_level = WARNING
+        # StreamHandler(sys.stdout).push_application()
+        # self.log = Logger('BTgymRenderer', level=self.log_level)
 
     def initialize_pyplot(self):
         pass
 
-    def render(self, *args, **kwargs):
+    def render(self, mode_list, **kwargs):
+        # self.log.debug('render() call to environment with disabled rendering. Returning dict of null-images.')
+        if type(mode_list) == str:
+            mode_list = [mode_list]
+        rgb_dict = {}
+        for mode in mode_list:
+            rgb_dict[mode] = self.plug
+
+        return rgb_dict
+
+    def draw_plot(self, *args, **kwargs):
+        # self.log.debug('draw_plot() call to environment with disabled rendering. Returning null-image.')
+        return self.plug
+
+    def draw_image(self, *args, **kwargs):
+        # self.log.debug('draw_image() call to environment with disabled rendering. Returning null-image.')
+        return self.plug
+
+    def draw_episode(self, *args, **kwargs):
+        # self.log.debug('draw_episode() call to environment with disabled rendering. Returning null-image.')
         return self.plug

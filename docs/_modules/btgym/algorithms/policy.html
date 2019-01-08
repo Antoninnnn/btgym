@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>btgym.algorithms.policy &mdash; BTGym 0.0.6 documentation</title>
+  <title>btgym.algorithms.policy &mdash; BTGym 0.0.7 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="../../../genindex.html"/>
         <link rel="search" title="Search" href="../../../search.html"/>
-    <link rel="top" title="BTGym 0.0.6 documentation" href="../../../index.html"/>
+    <link rel="top" title="BTGym 0.0.7 documentation" href="../../../index.html"/>
         <link rel="up" title="Module code" href="../../index.html"/> 
 
   
@@ -65,7 +65,7 @@
             
             
               <div class="version">
-                0.0.6
+                0.0.7
               </div>
             
           
@@ -93,18 +93,22 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Package Description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html#installation">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html#quickstart">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html#problem-definition">Problem definition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html#environment-engine-description">Environment engine description</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../intro.html#a3c-framework">A3C framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html#data-flow-structure">Data flow structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html#a3c-framework-description">A3C framework description</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.envs.html">btgym.envs package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../btgym.html">btgym.datafeed module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../btgym.html#module-btgym.dataserver">btgym.dataserver module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../btgym.html">btgym.dataserver module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.html#module-btgym.server">btgym.server module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.html#module-btgym.spaces">btgym.spaces module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.strategy.html">btgym.strategy package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.monitor.html">btgym.monitor package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.rendering.html">btgym.rendering package</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../btgym.datafeed.html">btgym.datafeed package</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.algorithms.html">btgym.algorithms package</a></li>
@@ -189,6 +193,7 @@
 <span class="kn">from</span> <span class="nn">btgym.algorithms.utils</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
 <span class="kn">from</span> <span class="nn">tensorflow.contrib.layers</span> <span class="k">import</span> <span class="n">flatten</span> <span class="k">as</span> <span class="n">batch_flatten</span>
+<span class="kn">from</span> <span class="nn">btgym.datafeed.base</span> <span class="k">import</span> <span class="n">EnvResetConfig</span>
 
 
 <div class="viewcode-block" id="BaseAacPolicy"><a class="viewcode-back" href="../../../btgym.algorithms.html#btgym.algorithms.policy.BaseAacPolicy">[docs]</a><span class="k">class</span> <span class="nc">BaseAacPolicy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -417,6 +422,10 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">train_phase</span><span class="p">:</span> <span class="kc">False</span>
             <span class="p">}</span>
         <span class="p">)</span>
+        <span class="c1">#print(&#39;feeder keys:&#39;)</span>
+        <span class="c1">#for k in feeder.keys():</span>
+        <span class="c1">#    print(&#39;key: {}, type: &lt;{}&gt;&#39;.format(k, type(feeder[k])))</span>
+        <span class="c1">#print(&#39;ops:&#39;, [self.on_sample, self.on_vf, self.on_lstm_state_out])</span>
         <span class="k">return</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">on_sample</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_vf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_lstm_state_out</span><span class="p">],</span> <span class="n">feeder</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="BaseAacPolicy.get_value"><a class="viewcode-back" href="../../../btgym.algorithms.html#btgym.algorithms.policy.BaseAacPolicy.get_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">,</span> <span class="n">lstm_state</span><span class="p">,</span> <span class="n">action_reward</span><span class="p">):</span>
@@ -460,7 +469,16 @@
         <span class="n">sess</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_default_session</span><span class="p">()</span>
         <span class="n">feeder</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pc_change_state_in</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;external&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">pc_change_last_state_in</span><span class="p">:</span> <span class="n">last_state</span><span class="p">[</span><span class="s1">&#39;external&#39;</span><span class="p">]}</span>
 
-        <span class="k">return</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pc_target</span><span class="p">,</span> <span class="n">feeder</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span></div></div>
+        <span class="k">return</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pc_target</span><span class="p">,</span> <span class="n">feeder</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="BaseAacPolicy.get_sample_config"><a class="viewcode-back" href="../../../btgym.algorithms.html#btgym.algorithms.policy.BaseAacPolicy.get_sample_config">[docs]</a>    <span class="k">def</span> <span class="nf">get_sample_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Dummy implementation.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">                default data sample configuration dictionary `btgym.datafeed.base.EnvResetConfig`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">EnvResetConfig</span></div></div>
 
 
 <div class="viewcode-block" id="Aac1dPolicy"><a class="viewcode-back" href="../../../btgym.algorithms.html#btgym.algorithms.policy.Aac1dPolicy">[docs]</a><span class="k">class</span> <span class="nc">Aac1dPolicy</span><span class="p">(</span><span class="n">BaseAacPolicy</span><span class="p">):</span>
@@ -733,7 +751,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Andrew Muzikin.
+        &copy; Copyright 2017, 2018, Andrew Muzikin.
 
     </p>
   </div>
@@ -755,7 +773,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'0.0.6',
+            VERSION:'0.0.7',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

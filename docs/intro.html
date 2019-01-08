@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Package Description &mdash; BTGym 0.0.6 documentation</title>
+  <title>Package Description &mdash; BTGym 0.0.7 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="BTGym 0.0.6 documentation" href="index.html"/>
+    <link rel="top" title="BTGym 0.0.7 documentation" href="index.html"/>
         <link rel="next" title="btgym.envs package" href="btgym.envs.html"/>
         <link rel="prev" title="BTGym DOCs" href="index.html"/> 
 
@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.0.6
+                0.0.7
               </div>
             
           
@@ -94,18 +94,22 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Package Description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#installation">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#quickstart">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#problem-definition">Problem definition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#environment-engine-description">Environment engine description</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#a3c-framework">A3C framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#data-flow-structure">Data flow structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#a3c-framework-description">A3C framework description</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="btgym.envs.html">btgym.envs package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="btgym.html">btgym.datafeed module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="btgym.html#module-btgym.dataserver">btgym.dataserver module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="btgym.html">btgym.dataserver module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="btgym.html#module-btgym.server">btgym.server module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="btgym.html#module-btgym.spaces">btgym.spaces module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="btgym.strategy.html">btgym.strategy package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="btgym.monitor.html">btgym.monitor package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="btgym.rendering.html">btgym.rendering package</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="btgym.datafeed.html">btgym.datafeed package</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="btgym.algorithms.html">btgym.algorithms package</a></li>
@@ -236,11 +240,12 @@ I have no idea what kind of algorithm and setup will solve it [if any]. Explore 
 </div>
 <p>Adding more controls may look like:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">btgym</span> <span class="k">import</span> <span class="n">BTgymEnv</span>
+<span class="kn">from</span> <span class="nn">gym</span> <span class="k">import</span> <span class="n">spaces</span>
 
 <span class="n">MyEnvironment</span> <span class="o">=</span> <span class="n">BTgymEnv</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;../examples/data/DAT_ASCII_EURUSD_M1_2016.csv&#39;</span><span class="p">,</span>
                          <span class="n">episode_duration</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;days&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;hours&#39;</span><span class="p">:</span> <span class="mi">23</span><span class="p">,</span> <span class="s1">&#39;minutes&#39;</span><span class="p">:</span> <span class="mi">55</span><span class="p">},</span>
                          <span class="n">drawdown_call</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-                         <span class="n">state_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">20</span><span class="p">),</span>
+                         <span class="n">state_shape</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;raw&#39;</span><span class="p">:</span> <span class="n">spaces</span><span class="o">.</span><span class="n">Box</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">high</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">4</span><span class="p">))},</span>
                          <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">,</span>
                          <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                          <span class="p">)</span>
@@ -248,12 +253,13 @@ I have no idea what kind of algorithm and setup will solve it [if any]. Explore 
 </div>
 <p>Same one but registering environment in Gym preferred way:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">gym</span>
+<span class="kn">from</span> <span class="nn">gym</span> <span class="k">import</span> <span class="n">spaces</span>
 <span class="kn">from</span> <span class="nn">btgym</span> <span class="k">import</span> <span class="n">BTgymEnv</span>
 
 <span class="n">env_params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;../examples/data/DAT_ASCII_EURUSD_M1_2016.csv&#39;</span><span class="p">,</span>
                   <span class="n">episode_duration</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;days&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;hours&#39;</span><span class="p">:</span> <span class="mi">23</span><span class="p">,</span> <span class="s1">&#39;minutes&#39;</span><span class="p">:</span> <span class="mi">55</span><span class="p">},</span>
                   <span class="n">drawdown_call</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-                  <span class="n">state_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">4</span><span class="p">),</span>
+                  <span class="n">state_shape</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;raw&#39;</span><span class="p">:</span> <span class="n">spaces</span><span class="o">.</span><span class="n">Box</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">high</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">4</span><span class="p">))},</span>
                   <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">,</span>
                   <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                   <span class="p">)</span>
@@ -270,7 +276,7 @@ I have no idea what kind of algorithm and setup will solve it [if any]. Explore 
 
 <span class="n">MyCerebro</span> <span class="o">=</span> <span class="n">bt</span><span class="o">.</span><span class="n">Cerebro</span><span class="p">()</span>
 <span class="n">MyCerebro</span><span class="o">.</span><span class="n">addstrategy</span><span class="p">(</span><span class="n">BTgymStrategy</span><span class="p">,</span>
-                      <span class="n">state_shape</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;raw_state&#39;</span><span class="p">:</span> <span class="n">spaces</span><span class="o">.</span><span class="n">Box</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">high</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">4</span><span class="p">))},</span>
+                      <span class="n">state_shape</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;raw&#39;</span><span class="p">:</span> <span class="n">spaces</span><span class="o">.</span><span class="n">Box</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">high</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">4</span><span class="p">))},</span>
                       <span class="n">skip_frame</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
                       <span class="n">state_low</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                       <span class="n">state_high</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -297,6 +303,63 @@ I have no idea what kind of algorithm and setup will solve it [if any]. Explore 
 </pre></div>
 </div>
 </div>
+<div class="section" id="problem-definition">
+<h1>Problem definition<a class="headerlink" href="#problem-definition" title="Permalink to this headline">¶</a></h1>
+<ul>
+<li><dl class="first docutils">
+<dt><strong>Discrete actions setup:</strong></dt>
+<dd><p class="first">consider setup with one riskless asset acting as broker account cash and K (by default - one) risky assets.
+For every risky asset there exists track of historic price records referred as <cite>data-line</cite>.
+Apart from assets data lines there [optionally] exists number of exogenous data lines holding some
+information and statistics, e.g. economic indexes, encoded news, macroeconomic indicators, weather forecasts
+etc. which are considered relevant to decision-making.
+It is supposed for this setup that:</p>
+<blockquote class="last">
+<div><ol class="arabic simple">
+<li>there is no interest rates for any asset;</li>
+<li>broker actions are fixed-size market orders (<cite>buy</cite>, <cite>sell</cite>, <cite>close</cite>); short selling is permitted;</li>
+<li>transaction costs are modelled via broker commission;</li>
+</ol>
+<p>4. ‘market liquidity’ and ‘capital impact’ assumptions are met;
+6. time indexes match for all data lines provided;</p>
+</div></blockquote>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>The problem is modelled as discrete-time finite-horizon partially observable Markov decision process for equity/currency trading:</dt>
+<dd><ul class="first last simple">
+<li><em>for every asset</em> traded agent action space is discrete <cite>(0: `hold</cite> [do nothing], 1:<cite>buy</cite>, 2: <cite>sell</cite>, 3:<cite>close</cite> [position])`;</li>
+<li>environment is episodic: maximum  episode duration and episode termination conditions
+are set;</li>
+<li>for every timestep of the episode agent is given environment state observation as tensor of last
+<cite>m</cite> time-embedded preprocessed values for every data-line included and emits actions according some stochastic policy.</li>
+<li>agent’s goal is to maximize expected cumulative capital by learning optimal policy;</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>Continuous actions setup[BETA]:</strong></dt>
+<dd><p class="first">this setup closely relates to continuous portfolio optimisation problem definition;
+it differs from setup above in:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>base broker actions are real numbers: <cite>a[i] in [0,1], 0&lt;=i&lt;=K, SUM{a[i]} = 1</cite>  for <cite>K</cite> risky assets added;
+each action is a market target order to adjust portfolio to get share <cite>a[i]*100%</cite> for <cite>i</cite>-th  asset;</li>
+<li>entire single-step broker action is dictionary of form:
+<cite>{cash_name: a[0], asset_name_1: a[1], …, asset_name_K: a[K]}</cite>;</li>
+<li>short selling is not permitted;</li>
+</ol>
+</div></blockquote>
+<ul class="last simple">
+<li>For RL model it implies having continuous action space as <cite>K+1</cite> dim vector.</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
 <div class="section" id="environment-engine-description">
 <h1>Environment engine description<a class="headerlink" href="#environment-engine-description" title="Permalink to this headline">¶</a></h1>
 <blockquote>
@@ -315,7 +378,7 @@ queries like <cite>env.reset()</cite> and <cite>env.step()</cite> by repeatedly 
 backtesting <cite>Cerebro</cite> engine on it. See OpenAI Gym documentation for details: <a class="reference external" href="https://gym.openai.com/docs">https://gym.openai.com/docs</a></li>
 </ul>
 <hr class="docutils" />
-<a class="reference internal image-reference" href="_images/btgym_env_operation.png"><img alt="btgym environment operation" src="_images/btgym_env_operation.png" style="width: 720.8000000000001px; height: 1019.2px;" /></a>
+<a class="reference internal image-reference" href="_images/btgym_env_operation.png"><img alt="btgym environment operation" src="_images/btgym_env_operation.png" style="width: 540.6px; height: 764.4px;" /></a>
 <p><strong>Workflow sample</strong>:</p>
 <ol class="arabic simple">
 <li><dl class="first docutils">
@@ -423,8 +486,12 @@ all state computations are performed one step ahead:</li>
 </pre></div>
 </div>
 </div>
-<div class="section" id="a3c-framework">
-<h1>A3C framework<a class="headerlink" href="#a3c-framework" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="data-flow-structure">
+<h1>Data flow structure<a class="headerlink" href="#data-flow-structure" title="Permalink to this headline">¶</a></h1>
+<a class="reference internal image-reference" href="_images/data_domain_iteration.png"><img alt="Btgym Data Domain Structure" src="_images/data_domain_iteration.png" style="width: 637.0px; height: 450.5px;" /></a>
+</div>
+<div class="section" id="a3c-framework-description">
+<h1>A3C framework description<a class="headerlink" href="#a3c-framework-description" title="Permalink to this headline">¶</a></h1>
 <p>BTGym can be thougt as two-part package:
 one is environment itself and the other one is collection RL algoritms tuned for solving algo-trading tasks.
 Below is BTgym A3C training framework operation diagram.
@@ -432,7 +499,31 @@ Three advantage actor-critic style algorithms are implemented: A3C itself, it’
 <p>Note that while base training framework is itself is somewhat stable,
 exact algorithms implementations and corresponding BTgym startegies, state and reward shaping methods,
 data providers etc. are subject to experiments and changes.</p>
-<a class="reference internal image-reference" href="_images/btgym_a3c_framework.png"><img alt="A3C framework workwlow image" src="_images/btgym_a3c_framework.png" style="width: 720.8000000000001px; height: 1019.2px;" /></a>
+<a class="reference internal image-reference" href="_images/btgym_a3c_framework.png"><img alt="A3C framework workwlow image" src="_images/btgym_a3c_framework.png" style="width: 540.6px; height: 764.4px;" /></a>
+<hr class="docutils" />
+<p><strong>Stacked LSTM Agent</strong></p>
+<p>Based on NAV_A3C agent from <a class="reference external" href="https://arxiv.org/pdf/1611.03673.pdf">LEARNING TO NAVIGATE IN COMPLEX ENVIRONMENTS</a>
+paper by Mirowski at al.</p>
+<p>Modifications to original paper architecture:</p>
+<ul class="simple">
+<li>splitted Policy/Value outputs: Policy is taken off first LSTM layer, Value - off the second;</li>
+<li>LSTM state initialisation: first RNN layer context (policy) is initialised on every episode start, while second
+(Value) is reset either on begining of every Trial (future work) or or every N-constant episodes,
+motivated by RL^2 approach by Duan et al.,
+<a class="reference external" href="https://arxiv.org/pdf/1611.02779.pdf">FAST REINFORCEMENT LEARNING VIA SLOW REINFORCEMENT LEARNING</a>;</li>
+<li>inner/external observation state state split: external (market) is encoded via conolution layers and fed to
+first LSTM layer, inner (broker) state is fed into second LSTM layer, can optionally be encoded via separate
+convolution block (doesnt seem to improve much though);</li>
+<li>optional Value Replay losss (<cite>Unreal</cite> feature) improves sample efficiency, but is computationally more expensive;</li>
+</ul>
+<p>Other details:</p>
+<ul class="simple">
+<li>All convolution and LSTM layers are layer-normalized, see
+<a class="reference external" href="https://arxiv.org/abs/1607.06450">Layer Normalisation</a> paper by Jimmy Ba at al.;</li>
+<li>A3C option <cite>time_flat</cite> is ON by default, improves training stability, reduces computation costs, see
+<a class="reference external" href="https://kismuz.github.io/btgym/btgym.algorithms.html#module-btgym.algorithms.aac">Base_AAC class Note</a> for details;</li>
+</ul>
+<a class="reference internal image-reference" href="_images/a3c_stacked_lstm_agent.png"><img alt="A3C stacked LSTM agent architecture" src="_images/a3c_stacked_lstm_agent.png" style="width: 450.5px; height: 637.0px;" /></a>
 </div>
 
 
@@ -457,7 +548,7 @@ data providers etc. are subject to experiments and changes.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Andrew Muzikin.
+        &copy; Copyright 2017, 2018, Andrew Muzikin.
 
     </p>
   </div>
@@ -479,7 +570,7 @@ data providers etc. are subject to experiments and changes.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.0.6',
+            VERSION:'0.0.7',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

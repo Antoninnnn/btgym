@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Python Module Index &mdash; BTGym 0.0.6 documentation</title>
+  <title>Python Module Index &mdash; BTGym 0.0.7 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="BTGym 0.0.6 documentation" href="index.html"/>
+    <link rel="top" title="BTGym 0.0.7 documentation" href="index.html"/>
  
 
 
@@ -67,7 +67,7 @@
             
             
               <div class="version">
-                0.0.6
+                0.0.7
               </div>
             
           
@@ -95,18 +95,22 @@
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Package Description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="intro.html#installation">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="intro.html#quickstart">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#problem-definition">Problem definition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="intro.html#environment-engine-description">Environment engine description</a></li>
-<li class="toctree-l1"><a class="reference internal" href="intro.html#a3c-framework">A3C framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#data-flow-structure">Data flow structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#a3c-framework-description">A3C framework description</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="btgym.envs.html">btgym.envs package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="btgym.html">btgym.datafeed module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="btgym.html#module-btgym.dataserver">btgym.dataserver module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="btgym.html">btgym.dataserver module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="btgym.html#module-btgym.server">btgym.server module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="btgym.html#module-btgym.spaces">btgym.spaces module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="btgym.strategy.html">btgym.strategy package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="btgym.monitor.html">btgym.monitor package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="btgym.rendering.html">btgym.rendering package</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="btgym.datafeed.html">btgym.datafeed package</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="btgym.algorithms.html">btgym.algorithms package</a></li>
@@ -209,22 +213,37 @@
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="btgym.algorithms.html#module-btgym.algorithms.losses"><code class="xref">btgym.algorithms.losses</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
        <a href="btgym.algorithms.html#module-btgym.algorithms.memory"><code class="xref">btgym.algorithms.memory</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="btgym.algorithms.html#module-btgym.algorithms.nn_utils"><code class="xref">btgym.algorithms.nn_utils</code></a></td><td>
+       <a href="btgym.algorithms.nn.html#module-btgym.algorithms.nn.ae"><code class="xref">btgym.algorithms.nn.ae</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="btgym.algorithms.html#module-btgym.algorithms.policy"><code class="xref">btgym.algorithms.policy</code></a></td><td>
+       <a href="btgym.algorithms.nn.html#module-btgym.algorithms.nn.layers"><code class="xref">btgym.algorithms.nn.layers</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.algorithms.nn.html#module-btgym.algorithms.nn.losses"><code class="xref">btgym.algorithms.nn.losses</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.algorithms.nn.html#module-btgym.algorithms.nn.networks"><code class="xref">btgym.algorithms.nn.networks</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.algorithms.policy.html#module-btgym.algorithms.policy.base"><code class="xref">btgym.algorithms.policy.base</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.algorithms.policy.html#module-btgym.algorithms.policy.stacked_lstm"><code class="xref">btgym.algorithms.policy.stacked_lstm</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
@@ -234,7 +253,17 @@
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="btgym.algorithms.html#module-btgym.algorithms.runner"><code class="xref">btgym.algorithms.runner</code></a></td><td>
+       <a href="btgym.algorithms.runner.html#module-btgym.algorithms.runner.base"><code class="xref">btgym.algorithms.runner.base</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.algorithms.runner.html#module-btgym.algorithms.runner.synchro"><code class="xref">btgym.algorithms.runner.synchro</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.algorithms.runner.html#module-btgym.algorithms.runner.threadrunner"><code class="xref">btgym.algorithms.runner.threadrunner</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
@@ -244,7 +273,22 @@
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="btgym.html#module-btgym.datafeed"><code class="xref">btgym.datafeed</code></a></td><td>
+       <a href="btgym.datafeed.html#module-btgym.datafeed.base"><code class="xref">btgym.datafeed.base</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.datafeed.html#module-btgym.datafeed.casual"><code class="xref">btgym.datafeed.casual</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.datafeed.html#module-btgym.datafeed.derivative"><code class="xref">btgym.datafeed.derivative</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.datafeed.html#module-btgym.datafeed.multi"><code class="xref">btgym.datafeed.multi</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
@@ -254,7 +298,17 @@
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="btgym.envs.html#module-btgym.envs.backtrader"><code class="xref">btgym.envs.backtrader</code></a></td><td>
+       <a href="btgym.envs.html#module-btgym.envs.base"><code class="xref">btgym.envs.base</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.envs.html#module-btgym.envs.multidiscrete"><code class="xref">btgym.envs.multidiscrete</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.envs.html#module-btgym.envs.portfolio"><code class="xref">btgym.envs.portfolio</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
@@ -279,12 +333,52 @@
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="btgym.research.html#module-btgym.research.policy_rl2"><code class="xref">btgym.research.policy_rl2</code></a></td><td>
+       <a href="btgym.research.casual_conv.html#module-btgym.research.casual_conv.layers"><code class="xref">btgym.research.casual_conv.layers</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
-       <a href="btgym.research.html#module-btgym.research.strategy_4"><code class="xref">btgym.research.strategy_4</code></a></td><td>
+       <a href="btgym.research.casual_conv.html#module-btgym.research.casual_conv.networks"><code class="xref">btgym.research.casual_conv.networks</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.research.casual_conv.html#module-btgym.research.casual_conv.policy"><code class="xref">btgym.research.casual_conv.policy</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.research.casual_conv.html#module-btgym.research.casual_conv.strategy"><code class="xref">btgym.research.casual_conv.strategy</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.research.gps.html#module-btgym.research.gps.aac"><code class="xref">btgym.research.gps.aac</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.research.gps.html#module-btgym.research.gps.loss"><code class="xref">btgym.research.gps.loss</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.research.gps.html#module-btgym.research.gps.oracle"><code class="xref">btgym.research.gps.oracle</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.research.gps.html#module-btgym.research.gps.policy"><code class="xref">btgym.research.gps.policy</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.research.gps.html#module-btgym.research.gps.strategy"><code class="xref">btgym.research.gps.strategy</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="btgym.research.html#module-btgym.research.strategy_gen_4"><code class="xref">btgym.research.strategy_gen_4</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
@@ -321,7 +415,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Andrew Muzikin.
+        &copy; Copyright 2017, 2018, Andrew Muzikin.
 
     </p>
   </div>
@@ -343,7 +437,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.0.6',
+            VERSION:'0.0.7',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

@@ -17,14 +17,10 @@
 #
 ###############################################################################
 
-# Asynchronous  implementation of several `advantage actor-critic`-style algorithms.
-
-from .envs import AtariRescale42x42
-from .rollout import Rollout, make_data_getter
-from .memory import Memory
-from .runner import RunnerThread
-from .worker import Worker
-from .policy import BaseAacPolicy, Aac1dPolicy
+from btgym.algorithms.runner.threadrunner import RunnerThread
 from .aac import BaseAAC, Unreal, A3C, PPO
-from .launcher import Launcher
+from .envs import AtariRescale42x42
+from btgym.algorithms.launcher.base import Launcher
+from .policy import BaseAacPolicy, Aac1dPolicy, StackedLstmPolicy, AacStackedRL2Policy
+from .worker import Worker
 

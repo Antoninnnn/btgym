@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>btgym.algorithms.memory &mdash; BTGym 0.0.6 documentation</title>
+  <title>btgym.algorithms.memory &mdash; BTGym 0.0.7 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="../../../genindex.html"/>
         <link rel="search" title="Search" href="../../../search.html"/>
-    <link rel="top" title="BTGym 0.0.6 documentation" href="../../../index.html"/>
+    <link rel="top" title="BTGym 0.0.7 documentation" href="../../../index.html"/>
         <link rel="up" title="Module code" href="../../index.html"/> 
 
   
@@ -65,7 +65,7 @@
             
             
               <div class="version">
-                0.0.6
+                0.0.7
               </div>
             
           
@@ -93,18 +93,22 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Package Description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html#installation">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html#quickstart">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html#problem-definition">Problem definition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html#environment-engine-description">Environment engine description</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../intro.html#a3c-framework">A3C framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html#data-flow-structure">Data flow structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html#a3c-framework-description">A3C framework description</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.envs.html">btgym.envs package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../btgym.html">btgym.datafeed module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../btgym.html#module-btgym.dataserver">btgym.dataserver module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../btgym.html">btgym.dataserver module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.html#module-btgym.server">btgym.server module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.html#module-btgym.spaces">btgym.spaces module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.strategy.html">btgym.strategy package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.monitor.html">btgym.monitor package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.rendering.html">btgym.rendering package</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../btgym.datafeed.html">btgym.datafeed package</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../btgym.algorithms.html">btgym.algorithms package</a></li>
@@ -179,9 +183,12 @@
 <span class="c1"># https://miyosuda.github.io/</span>
 <span class="c1"># https://github.com/miyosuda/unreal</span>
 
+<span class="kn">from</span> <span class="nn">logbook</span> <span class="k">import</span> <span class="n">Logger</span><span class="p">,</span> <span class="n">StreamHandler</span><span class="p">,</span> <span class="n">WARNING</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">deque</span>
-<span class="kn">from</span> <span class="nn">btgym.algorithms</span> <span class="k">import</span> <span class="n">Rollout</span>
+<span class="kn">from</span> <span class="nn">btgym.algorithms.rollout</span> <span class="k">import</span> <span class="n">Rollout</span>
 
 
 <div class="viewcode-block" id="Memory"><a class="viewcode-back" href="../../../btgym.algorithms.html#btgym.algorithms.memory.Memory">[docs]</a><span class="k">class</span> <span class="nc">Memory</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -191,7 +198,7 @@
 <span class="sd">    Note:</span>
 <span class="sd">        must be filled up before calling sampling methods.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">history_size</span><span class="p">,</span> <span class="n">max_sample_size</span><span class="p">,</span> <span class="n">priority_sample_size</span><span class="p">,</span> <span class="n">log</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">history_size</span><span class="p">,</span> <span class="n">max_sample_size</span><span class="p">,</span> <span class="n">priority_sample_size</span><span class="p">,</span> <span class="n">log_level</span><span class="o">=</span><span class="n">WARNING</span><span class="p">,</span>
                  <span class="n">rollout_provider</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">reward_threshold</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">use_priority_sampling</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 
@@ -199,7 +206,7 @@
 <span class="sd">            history_size:           number of experiences stored;</span>
 <span class="sd">            max_sample_size:        maximum allowed sample size (e.g. off-policy rollout length);</span>
 <span class="sd">            priority_sample_size:   sample size of priority_sample() method</span>
-<span class="sd">            log:                    parent logger;</span>
+<span class="sd">            log_level:              int, logbook.level;</span>
 <span class="sd">            rollout_provider:       callable returning list of Rollouts NOT USED</span>
 <span class="sd">            task:                   parent worker id;</span>
 <span class="sd">            reward_threshold:       if |experience.reward| &gt; reward_threshold: experience is saved as &#39;prioritized&#39;;</span>
@@ -210,8 +217,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">max_sample_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_sample_size</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">priority_sample_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">priority_sample_size</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rollout_provider</span> <span class="o">=</span> <span class="n">rollout_provider</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">log</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task</span> <span class="o">=</span> <span class="n">task</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="n">log_level</span>
+        <span class="n">StreamHandler</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span><span class="o">.</span><span class="n">push_application</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">Logger</span><span class="p">(</span><span class="s1">&#39;ReplayMemory_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">),</span> <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">log_level</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">use_priority_sampling</span> <span class="o">=</span> <span class="n">use_priority_sampling</span>
         <span class="c1"># Indices for non-priority frames:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_zero_reward_indices</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
@@ -456,7 +465,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Andrew Muzikin.
+        &copy; Copyright 2017, 2018, Andrew Muzikin.
 
     </p>
   </div>
@@ -478,7 +487,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'0.0.6',
+            VERSION:'0.0.7',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
