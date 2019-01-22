@@ -47,7 +47,7 @@ def ou_mle_estimator(data, dt=1, force_zero_mean=True):
     bias = data.mean(axis=-1)
     data -= bias[:, None]
 
-    n = data.shape[-1]
+    n = data.shape[-1] - 1
     x = data[:, :-1]
     y = data[:, 1:]
     sx = x.sum(axis=-1)
@@ -115,7 +115,7 @@ def ou_lsr_estimator(data, dt=1):
     bias = data.mean(axis=-1)
     data -= bias[:, None]
 
-    n = data.shape[-1]
+    n = data.shape[-1] - 1
     x = data[:, :-1]
     y = data[:, 1:]
     sx = x.sum(axis=-1)
@@ -144,6 +144,110 @@ def ou_variance(l, sigma, **kwargs):
     Returns true OU process variance.
     """
     return np.clip(sigma**2, 0, None) / (2 * np.clip(l, 1e-10, None))
+
+
+def ou_log_likelihood(mu, l, sigma, data):
+    """
+    Estimates OU model parameters log likelihood given data log[P(mu, lambda, sigma|X)]
+    """
+    x = data[1:]
+    x_prev = data[:-1]
+    logL = - .5 * np.log(2 * np.pi) - np.log(sigma) \
+           - 1 / (2 * sigma ** 2) * ((x - x_prev * np.exp(-l) - mu * (1 - np.exp(-l))) ** 2).mean(axis=-1)
+    return logL
+
+
+def batch_covariance(x):
+    """
+    Batched covariance matrix estimation.
+    Credit to: Divakar@stackoverflow.com, see:
+    https://stackoverflow.com/questions/40394775/vectorizing-numpy-covariance-for-3d-array
+
+    Args:
+        x:  array of size [batch_dim, num_variables, num_observations]
+
+    Returns:
+        estimated covariance matrix of size [batch_dim, num_variables, num_variables]
+    """
+    n = x.shape[2]
+    m1 = x - x.sum(2, keepdims=1) / n
+    return np.einsum('ijk,ilk->ijl', m1, m1) / (n - 1)
+
+
+def multivariate_t_rvs(mean, cov, df, size):
+    """
+    Student's T random variable.
+    Generates random samples from multivariate t distribution.
+
+    Code credit:
+    written by Enzo Michelangeli, style changes by josef-pktd;
+    https://github.com/statsmodels/statsmodels/blob/master/statsmodels/sandbox/distributions/multivariate.py#L90
+
+    Args:
+        mean:   array_like, mean of random variable of size [dim], length determines dimensionality of random variable
+        cov:    array_like, covariance  matrix of size [dim, dim]
+        df:     array_like > 0, degrees of freedom of size [dim]
+        size:   array_like, size of observations to draw
+
+    Returns:
+        rvs as ndarray of size: size + [dim], i.e. if size=[m, n] than returned sample is: [m, n, dim]
+    """
+    # t-variance memo: ((df - 2) / df) ** .5
+    mean = np.asarray(mean)
+    df = np.asarray(df)
+
+    if type(size) in [int, float]:
+        size = [int(size)]
+    else:
+        size = list(size)
+
+    assert mean.ndim == 1 and df.shape == mean.shape, \
+        'Expected `mean` and `df` be 1d array_like of same size, got shapes: {} and {}'.format(mean.shape, df.shape)
+
+    d = len(mean)
+
+    assert cov.shape == (d, d), 'Dimensionality: {} does not match covariance shape: {}'.format(d, cov.shape)
+
+    x = np.random.chisquare(df, size + [d]) / df
+    z = np.random.multivariate_normal(np.zeros(d), cov, size)
+
+    return mean[None, :] + z / np.sqrt(x)
+
+
+def cov2corr(cov):
+    """
+    Converts covariance matrix to correlation matrix.
+
+    Args:
+        cov:    square matrix
+
+    Returns:
+        correlation matrix of the same size.
+    """
+    cov = np.asanyarray(cov)
+    std = np.sqrt(np.clip(np.diag(cov), 1e-16, None))
+    corr = cov / np.outer(std, std)
+    return corr
+
+
+def log_stat2stat(log_mean, log_variance):
+    """
+    Converts mean and variance of log_transformed RV
+    to mean and variance of original near-normally distributed RV.
+
+    Args:
+        log_mean:       array_like
+        log_variance:   array_like
+
+    Returns:
+        mean, variance of the same size
+    """
+    mean = np.exp(log_mean + 0.5 * log_variance)
+    variance = mean**2 * (np.exp(log_variance) - 1)
+
+    return  mean, variance
+
+
 
 
 
