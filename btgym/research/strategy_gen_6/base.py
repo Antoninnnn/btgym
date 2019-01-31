@@ -446,7 +446,9 @@ class BaseStrategy6(bt.Strategy):
         norm_state = self.get_normalisation()
 
         # ..current order sizes:
+
         # order_sizes = self.get_order_sizes()
+
 
         # ...individual positions for each instrument traded:
         positions = [self.env.broker.getposition(data) for data in self.datas]
@@ -455,6 +457,7 @@ class BaseStrategy6(bt.Strategy):
         exposure = sum([abs(pos.size) for pos in positions])
 
         # ... tracking normalisation constant:
+
         self.normalizer = 1 / np.clip(
             (norm_state.up_interval - norm_state.low_interval),
             1e-8,
@@ -765,7 +768,7 @@ class BaseStrategy6(bt.Strategy):
         Collects estimated values for every mode of observation space by calling methods from
         `collection_get_state_methods` dictionary.
         As a rule, this method should not be modified, override or implement corresponding get_[mode]_state() methods,
-        defining necessary calculations and return arbitrary shaped tensors for every space mode.
+        defining necessary calculations and return properly shaped tensors for every space mode.
 
         Note:
             - 'data' referes to bt.startegy datafeeds and should be treated as such.

@@ -902,6 +902,20 @@ class SSAStrategy_0(PairSpreadStrategy_0):
         )
         return self.normalisation_state
 
+    def get_order_sizes(self):
+        """
+        Estimates current order sizes for assets in trade, updates attribute.
+
+        Returns:
+            array-like of floats
+        """
+        s = self.norm_stat_tracker_2.get_state()
+        self.current_order_sizes = np.asarray(
+            self.spread_sizer.get_sizing(self.env.broker.get_value(), s.mean, s.variance),
+            dtype=np.float
+        )
+        return self.current_order_sizes
+
     def get_external_state(self):
         return dict(
             ssa=self.get_external_ssa_state(),
@@ -927,7 +941,7 @@ class SSAStrategy_0(PairSpreadStrategy_0):
         # self.log.warning('x_upd: {}'.format(x_upd.shape))
         self.data_model.update(x_upd)
 
-        x_ssa = self.data_model.s.transform(size=self.p.time_dim).T
+        x_ssa = self.data_model.s.transform(size=self.p.time_dim).T  #* self.normalizer
 
         # Gradient along features axis:
         # dx = np.gradient(x_ssa, axis=-1)
@@ -939,6 +953,7 @@ class SSAStrategy_0(PairSpreadStrategy_0):
 
         # Crop outliers:
         x_ssa = np.clip(x_ssa, -10, 10)
+        # x_ssa = np.clip(dx, -10, 10)
         return x_ssa[:, None, :]
 
     def get_data_model_state(self):
@@ -961,6 +976,7 @@ class SSAStrategy_0(PairSpreadStrategy_0):
             ],
             axis=0
         )
+        # self.external_model_state = np.gradient(self.external_model_state, axis=-1)
         return self.external_model_state
 
     def get_internal_broker_state(self):
@@ -978,12 +994,11 @@ class SSAStrategy_0(PairSpreadStrategy_0):
         """
         Opens or adds up long spread `virtual position`.
         """
-        # mean, variance = log_stat2stat(self.data_model.stat.mean, self.data_model.stat.variance)
-        s = self.norm_stat_tracker_2.get_state()
-        size_0, size_1 = self.spread_sizer.get_sizing(self.env.broker.get_value(), s.mean, s.variance)
+        # Get current sizes:
+        order_sizes = self.get_order_sizes()
 
         if self.spread_position_size >= 0:
-            if not self.can_add_up(size_0, size_1):
+            if not self.can_add_up(order_sizes[0], order_sizes[1]):
                 self.order_failed += 1
                 # self.log.warning(
                 #     'Adding Long spread to existing {} hit margin, ignored'.format(self.spread_position_size)
@@ -997,18 +1012,16 @@ class SSAStrategy_0(PairSpreadStrategy_0):
         name1 = self.datas[0]._name
         name2 = self.datas[1]._name
 
-        self.order = self.buy(data=name1, size=size_0)
-        self.order = self.sell(data=name2, size=size_1)
+        self.order = self.buy(data=name1, size=order_sizes[0])
+        self.order = self.sell(data=name2, size=order_sizes[1])
         self.spread_position_size += 1
         # self.log.warning('long spread submitted, new pos. size: {}'.format(self.spread_position_size))
 
     def short_spread(self):
-        # mean, variance = log_stat2stat(self.data_model.stat.mean, self.data_model.stat.variance)
-        s = self.norm_stat_tracker_2.get_state()
-        size_0, size_1 = self.spread_sizer.get_sizing(self.env.broker.get_value(), s.mean, s.variance)
+        order_sizes = self.get_order_sizes()
 
         if self.spread_position_size <= 0:
-            if not self.can_add_up(size_0, size_1):
+            if not self.can_add_up(order_sizes[0], order_sizes[1]):
                 self.order_failed += 1
                 # self.log.warning(
                 #     'Adding Short spread to existing {} hit margin, ignored'.format(self.spread_position_size)
@@ -1022,8 +1035,8 @@ class SSAStrategy_0(PairSpreadStrategy_0):
         name1 = self.datas[0]._name
         name2 = self.datas[1]._name
 
-        self.order = self.sell(data=name1, size=size_0)
-        self.order = self.buy(data=name2, size=size_1)
+        self.order = self.sell(data=name1, size=order_sizes[0])
+        self.order = self.buy(data=name2, size=order_sizes[1])
         self.spread_position_size -= 1
         # self.log.warning('short spread submitted, new pos. size: {}'.format(self.spread_position_size))
 
@@ -1045,8 +1058,9 @@ class SSAStrategy_0(PairSpreadStrategy_0):
             True if possible, False otherwise
         """
         if order_1_size is None or order_0_size is None:
-            order_0_size = self.p.order_size[self.datas[0]._name]
-            order_1_size = self.p.order_size[self.datas[1]._name]
+            order_sizes = self.get_order_sizes()
+            order_0_size = order_sizes[0]
+            order_1_size = order_sizes[1]
 
         # Get full operation cost:
         # TODO: it can be two commissions schemes
