@@ -1,7 +1,8 @@
-## <a name="title"></a>Backtrader gym Environment
+## <a name="title"></a>BTGym
 
+**Scalable, event-driven, deep-learning-friendly backtesting library.**
 
-**OpenAI Gym environment API for Backtrader backtesting library.**
+Build on top of Backtrader with OpenAI Gym environment API.
 
 
 ```
