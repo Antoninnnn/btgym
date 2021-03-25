@@ -60,7 +60,7 @@ It is highly recommended to run BTGym in designated virtual environment.
 
 Clone or copy btgym repository to local disk, cd to it and run: `pip install -e .` to install package and all dependencies:
 
-    git clone https://github.com/Kismuz/btgym.git
+    git clone https://github.com/Antoninnnn/btgym.git
 
     cd btgym
 
